@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "VentureOS",
+    "tagline": "AI-Powered Business Intelligence for Bangladeshi Entrepreneurs"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "products": "Product Search",
+    "marketIntelligence": "Market Intelligence",
+    "blueprint": "Business Blueprint",
+    "shipping": "Shipping Calculator",
+    "financial": "Financial Tracker",
+    "seo": "SEO Strategy",
+    "team": "Team Workspace",
+    "settings": "Settings"
+  }
+}

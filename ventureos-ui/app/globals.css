@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+/* Bengali font support */
+.font-bengali {
+  font-family: var(--font-bengali), sans-serif;
+}
+
+.font-english {
+  font-family: var(--font-english), system-ui, sans-serif;
+}
+
+/* Ensure proper line height for Bengali text */
+.font-bengali * {
+  line-height: 1.6;
+}
+
+/* Touch-friendly interactive elements */
+@media (max-width: 768px) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,37 @@
+import type { Metadata } from "next";
+import localFont from "next/font/local";
+import "./globals.css";
+import { SessionProvider } from "@/components/providers/SessionProvider";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+});
+
+export const metadata: Metadata = {
+  title: "VentureOS - AI-Powered Business Intelligence",
+  description: "AI-powered business intelligence and product sourcing platform for Bangladeshi entrepreneurs",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  // This layout is only used for the root redirect
+  return (
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <SessionProvider>{children}</SessionProvider>
+      </body>
+    </html>
+  );
+}
