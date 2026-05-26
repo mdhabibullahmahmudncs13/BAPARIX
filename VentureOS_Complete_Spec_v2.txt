@@ -1,0 +1,1848 @@
+﻿VentureOS
+COMPLETE PRODUCT DEVELOPMENT SPECIFICATION
+AI-Powered Business Intelligence & Product Sourcing Platform
+Built for Bangladesh. Ready for the World.
+
+
+Version 2.0  |  Status: DRAFT — Ready for Dev  |  MVP Target: Month 3  |  Team: 2–5 Developers
+
+
+Merged & Extended Edition — Includes All Modules + New AI Database Modules
+________________
+
+
+1. Executive Summary
+
+
+
+
+VentureOS is a full-stack business intelligence and product-sourcing platform targeting Bangladeshi resellers, importers, and SME owners. It combines AI-powered market analysis, real-time product sourcing across Chinese and local platforms, geolocation competitor intelligence, shipping cost comparison, and business performance tracking — all in one unified workspace with both Bengali and English interfaces.
+
+
+Dimension
+	Summary
+	Problem
+	Bangladeshi resellers and SME owners lack a unified tool to find trending products, validate market demand, compare sourcing costs, and track business performance.
+	Solution
+	VentureOS: one platform to research → source → plan → track — built specifically for the Bangladesh market with local payment, language, and regulatory context.
+	Primary Users
+	Resellers/importers (product-first) and SME owners (business-first) — both user modes supported from Day 1.
+	Revenue Model
+	Freemium — free tier with core features; paid plans unlock AI blueprint generation, advanced analytics, and team collaboration.
+	AI Strategy
+	Hybrid: Ollama + Qwen2.5-7b for fast local tasks; Claude API for blueprints, market analysis, and complex reasoning.
+	Launch Language
+	Bengali + English simultaneously from Day 1.
+	MVP Timeline
+	3 months to first working product; full platform by Month 9.
+	Total Modules
+	12 feature modules (including 2 new AI database and automation modules).
+	
+
+★  NORTH STAR: A reseller in Dhaka can open VentureOS, type a product idea in Bengali, and within 60 seconds receive: market demand data, competitor analysis, supplier links, shipping costs, projected profit margins, and a content strategy — without leaving the platform.
+	
+
+________________
+
+
+2. Problem Statement & Product Vision
+
+
+2.1 The Problem
+Bangladeshi entrepreneurs and resellers face a fragmented, high-risk workflow today:
+* No unified tool to discover trending products from China or global markets
+* No way to validate local market demand before investing capital
+* Sourcing platforms (Alibaba, Pinduoduo, Xianyu) are in Chinese — language barrier
+* Shipping cost comparison across agencies is fully manual
+* Business tracking is done in spreadsheets or not at all
+* No localized blueprint generator that understands NBR tax, bKash, Eid cycles
+* No structured AI database of where to research products or which sites launch products first
+
+
+2.2 Product Vision
+VentureOS becomes the single operating system for any Bangladesh-based entrepreneur — from the moment they think of a product idea to the moment they are tracking live sales performance.
+
+
+3. Target Users & User Modes
+
+
+VentureOS serves two primary user types through two onboarding modes:
+
+
+Mode A — Product Reseller / Importer
+	Mode B — SME Owner / Existing Business
+	Starts with a product idea or category. Wants to find what to sell, where to source it, how much to ship, and whether demand exists locally.Key inputs: product idea, budget, location, warehouse capacity, target accounts (domestic/international)
+	Has an existing business. Wants to optimise operations, understand market position, track financial performance, and find adjacent products to expand.Key inputs: business type, team size, current revenue, categories, goals
+	
+
+3.1 User Personas
+Persona
+	Profile
+	Primary Need
+	Key Modules
+	Karim — Reseller
+	28yo, Dhaka. Sources from Alibaba/Xianyu. Sells via Facebook Marketplace and Daraz.
+	Product validation, price comparison, shipping cost, content ideas.
+	Modules 2, 3, 5, 7
+	Rina — SME Owner
+	35yo, Chattogram. Runs a cosmetics shop.
+	Competitor map, demand forecasting, financial tracking, seasonal campaign planning.
+	Modules 3, 4, 6, 7
+	Arif — New Entrepreneur
+	22yo student. Has ৳50,000 capital. Has no business yet.
+	Product idea validation, full blueprint, step-by-step launch guide.
+	Modules 1, 4, 10, 11
+	Nadia — Team Manager
+	Manages 3-person import business.
+	Collaborative workspace, role-based access, shared dashboards.
+	Modules 6, 8
+	
+
+________________
+4. Recommended Tech Stack
+
+
+For a team of 2–5 developers building a full-stack AI platform, the following stack balances speed, scalability, AI-readiness, and hiring availability in Bangladesh:
+
+
+Layer
+	Technology
+	Rationale
+	Frontend
+	Next.js 14 (React) + Tailwind CSS
+	SSR for SEO, fast routing, full-stack in one repo, Bengali font support, great ecosystem
+	Mobile
+	React Native (Expo) — Phase 3
+	Share logic with Next.js; avoids maintaining two codebases
+	Backend
+	FastAPI (Python)
+	Best for AI/ML integration, async, fast, simple for scraping orchestration
+	Primary DB
+	PostgreSQL (Supabase)
+	Relational integrity for financial data; Supabase adds real-time, auth, storage
+	Document DB
+	MongoDB
+	Unstructured scraped product data — flexible schema
+	Cache / Queue
+	Redis + Celery
+	Background jobs for scraping, blueprint generation, alerts
+	AI — Local
+	Ollama + Qwen2.5-7b
+	Onboarding, tagging, copy generation — fast, private, free
+	AI — Cloud
+	Claude API (claude-sonnet)
+	Blueprints, deep market analysis, risk assessment
+	AI Router
+	Custom Python middleware
+	Routes tasks to local or cloud model based on complexity + cost
+	AI DB Layer
+	PostgreSQL + MongoDB + versioned JSON
+	Powers Module 11 (Marketplace DB) with version control and timestamped snapshots
+	Scraping
+	Playwright + Scrapy + Apify
+	Headless browsing for JS-heavy sites; Apify for managed scraping
+	Search
+	Meilisearch
+	Fast full-text search across product catalog in Bengali + English
+	Auth
+	Supabase Auth
+	Email, Google, phone (OTP via bKash number)
+	Payments
+	SSLCommerz + bKash API + Nagad
+	Local payment gateway covering all major BD payment methods
+	Storage
+	Supabase Storage + Cloudflare R2
+	User uploads, exported PDFs, report storage
+	Hosting
+	Vercel (frontend) + Railway (backend)
+	Fast deploy, git integration, auto-scaling
+	CDN / Edge
+	Cloudflare
+	BD users need fast edge; also handles rate limiting for scraping
+	Monitoring
+	Sentry + PostHog + Uptime Robot
+	Error tracking, product analytics, uptime alerts
+	
+
+________________
+
+
+5. System Architecture
+
+
+5.1 High-Level Architecture
+Component
+	Role
+	Details
+	Client Layer
+	User interface
+	Next.js web app (desktop + mobile browser) + future React Native app
+	API Gateway
+	Unified REST API
+	FastAPI — auth middleware; rate limiting per plan tier
+	AI Router
+	Model dispatch
+	Classifies task complexity, routes to Ollama (local) or Claude API (cloud). Fallback chain: Claude → Qwen2.5-7b → cached response
+	Scraping Engine
+	Data acquisition
+	Celery workers running Playwright/Scrapy scrapers on schedule. Results stored in MongoDB. Human-verified data flagged separately.
+	Marketplace DB
+	AI research database
+	Module 11 — structured, versioned database of sites/pages by product category. Auto-updates on schedule.
+	Research Site Dataset
+	Developer reference
+	Module 12 — automation dataset of sites permitted for product research. Developer access only.
+	Data Pipeline
+	ETL
+	Raw scraped data → cleaning → enrichment (AI tagging) → PostgreSQL/MongoDB → served via API
+	Notification Service
+	Alerts
+	Celery Beat + Firebase FCM — sends price alerts, trend alerts, reorder notifications
+	Background Jobs
+	Async work
+	Blueprint generation, PDF export, DB version snapshots, report building — all queued via Redis/Celery
+	
+
+5.2 AI Hybrid Router Logic
+Engine
+	Tasks Handled
+	LOCAL — Ollama + Qwen2.5-7b
+	Onboarding Q&A, financial data tagging, product copy generation, translation (EN↔BN), form validation, trend summary copy, Marketplace DB query parsing — fast, private, zero API cost
+	CLOUD — Claude API
+	Business blueprint generation, deep market analysis, risk assessment, competitor strategy, custom financial projections, SEO content strategy, Marketplace DB enrichment — quality-critical tasks
+	
+
+5.3 Data Architecture
+Data Type
+	Storage
+	User accounts, subscriptions, roles
+	PostgreSQL (Supabase)
+	Financial tracker entries
+	PostgreSQL — isolated schema, encrypted
+	Scraped product listings
+	MongoDB — flexible schema, indexed by category + geo
+	Business blueprints
+	PostgreSQL + PDF in Supabase Storage
+	Market intelligence reports
+	MongoDB — time-series with TTL expiry
+	Marketplace Intelligence DB (Module 11)
+	PostgreSQL (structured site records) + MongoDB (raw page data) + versioned JSON snapshots in Cloudflare R2
+	Research Site Dataset (Module 12)
+	PostgreSQL — developer-only table, access-controlled, not exposed via public API
+	Scraping jobs & queues
+	Redis
+	Session cache & API responses
+	Redis with TTL
+	User uploads (images, docs)
+	Supabase Storage / Cloudflare R2
+	
+
+________________
+
+
+6. Feature Modules — Complete Specification
+
+
+VentureOS is organized into 12 feature modules. All modules are planned from Day 1 and delivered in phases. Modules 1–10 are user-facing; Module 11 is a server-side AI research database; Module 12 is a developer-only automation dataset.
+
+
+Module 1 — AI Onboarding Engine
+	MVP — Month 1–3
+	
+
+The entry point to VentureOS. Collects structured user context through a conversational interface and routes the user to Mode A (reseller) or Mode B (SME owner). Powered by a local AI model running on-device — no internet required.
+
+
+1.1 Onboarding Input Fields
+Input Field
+	What It Means & Why It Matters
+	Geographical Location
+	City, district, or region. Used to pull local market data, competitor density, and customer demand heatmaps.
+	Product Idea / Type
+	The item or service the user wants to sell. Triggers category-specific analysis and sourcing suggestions.
+	Business Type
+	Reseller, manufacturer, service provider, exporter, etc. Determines which blueprint template and financial model is used.
+	Total Investment
+	How much money is available to start. Sets realistic revenue projections and limits strategy to what is affordable.
+	Team Size
+	Number of people working in the business. Affects role recommendations, workload planning, and collaboration features.
+	Warehouse / Storage Capacity
+	Available storage space in sq ft or number of units. Influences inventory planning and reorder suggestions.
+	Account Type
+	Domestic only or international (import/export). Unlocks cross-border features and export readiness scoring.
+	
+
+★  Smart follow-up: If the user selects international accounts, the system automatically asks about target countries, preferred currencies, and export documentation status.
+	
+
+1.2 Feature Breakdown
+Feature
+	Phase
+	Priority
+	Notes
+	Conversational intake
+	MVP
+	P0
+	Business type, product idea, location, investment, team size, warehouse, accounts
+	Adaptive follow-up questions
+	MVP
+	P0
+	No dead-end forms; branches by business type
+	Bengali + English UI
+	MVP
+	P0
+	Native Bengali — not machine-translated
+	Mode detection (A/B)
+	MVP
+	P0
+	Auto-routes to reseller or SME mode based on answers
+	Input schema validation
+	MVP
+	P1
+	Validates against business schema before blueprint generation
+	Low-literacy mode
+	MVP
+	P1
+	Icons and voice prompts for users with limited reading ability
+	Islamic finance flag
+	MVP
+	P1
+	Murabaha and profit-sharing templates flagged automatically
+	Local AI model (Qwen2.5-7b)
+	MVP
+	P0
+	Handles onboarding locally for speed and privacy. No internet required.
+	
+
+Module 2 — Product Intelligence & Sourcing
+	MVP (core) + Phase 2 enrichment
+	
+
+The flagship module. Allows users to search for products across Chinese and global platforms, compare prices, assess quality tiers, and identify sourcing options. Data is pre-scraped nightly and served from MongoDB for speed.
+
+
+2.1 Sourcing Platforms
+Platform
+	Best For
+	Alibaba / 1688
+	Bulk orders, factory-direct pricing, MOQ negotiation
+	Pinduoduo (PDD)
+	Ultra-low price items, small MOQ, trending consumer goods
+	Xianyu (闲鱼)
+	2nd-hand electronics, refurbished goods, sample sourcing
+	SkyBuyBD
+	Local BD sourcing agent — manual + scraping, shipping coordination
+	DHgate
+	Medium volume, faster shipping, buyer protection
+	AliExpress
+	Single units for testing, product validation before bulk buy
+	
+
+2.2 Feature Breakdown
+Feature
+	Phase
+	Priority
+	Notes
+	Product search — Alibaba
+	MVP
+	P0
+	Via Alibaba Open Platform API + scraping fallback
+	Product search — Pinduoduo
+	MVP
+	P0
+	Scraping (no official API) — price, description, images
+	Product search — Xianyu
+	MVP
+	P0
+	Second-hand/clearance market; trust scoring shown
+	Product search — SkyBuyBD
+	MVP
+	P0
+	Local BD sourcing agent — manual + scraping
+	Pre-scraped product database
+	MVP
+	P0
+	Nightly scrape jobs; results cached in MongoDB
+	Price range + quality tier
+	MVP
+	P0
+	Cheap / Medium / High quality tiers per product
+	Similar products — USA/AUS/CAN
+	MVP
+	P1
+	Cross-market trend signals from Amazon, eBay
+	AI product translation (ZH→BN/EN)
+	MVP
+	P1
+	Auto-translate Chinese listings via local model
+	Supplier reliability score
+	Phase 2
+	P1
+	Based on order history, reviews, years active
+	MOQ and lead time display
+	MVP
+	P1
+	Minimum order quantity and delivery estimate
+	Profit margin calculator
+	MVP
+	P0
+	Cost + shipping + customs duty + target margin = sell price
+	Product price history chart
+	Phase 2
+	P1
+	Track price changes over 30/90/180 days
+	Supplier risk scoring
+	Phase 2
+	P1
+	Dispute rate, shipping speed history, authenticity flag
+	Quality inspection checklist
+	MVP
+	P1
+	Auto-generated per product category before bulk order
+	
+
+________________
+
+
+Module 3 — Market Intelligence Engine
+	MVP (trends) + Phase 2 (geo + deep analysis)
+	
+
+Watches what is trending in real-time across social media, search engines, and marketplaces. Translates trends into actionable content and product ideas for the user's specific business type. Also provides geolocation competitor mapping and demand heatmaps.
+
+
+3.1 Trend Data Sources
+Source
+	Data Collected
+	Facebook & TikTok Ad Library
+	Ads similar businesses are running, formats, and estimated reach
+	Google Trends (SerpAPI/Pytrends)
+	Keyword search volume over time for the product category, by BD region
+	Google Lens signals
+	Visual search trends — which product styles consumers are photographing and searching
+	Marketplace search data
+	Top-searched terms on Daraz, Shajgoj, Chaldal, and similar BD platforms
+	Social commerce signals
+	Trending hashtags, viral product posts, and creator content in the product niche
+	Amazon USA/UK (PA API + scraping)
+	Global trend signals, US bestseller data — 6–12 months ahead of BD demand
+	
+
+3.2 Trend Duration Intelligence
+Signal
+	What It Tells the User
+	Trend Start Date
+	When this product or content style first appeared in search/ad data
+	Peak Period
+	The month or week when demand was highest — used to plan launch timing
+	Current Trajectory
+	Rising, stable, or declining — so users know if they are early or late
+	Estimated Trend Lifespan
+	Predicted weeks or months remaining before the trend fades, based on historical category patterns
+	Seasonal Flag
+	Whether the trend is tied to a season (Eid, winter, monsoon) or is evergreen
+	
+
+3.3 Feature Breakdown
+Feature
+	Phase
+	Priority
+	Notes
+	Weekly trending product alerts
+	MVP
+	P0
+	Filtered by BD geography, category, demographic
+	Seasonal demand forecasting
+	MVP
+	P0
+	Eid, winter, school season, monsoon peaks
+	Import/export data (6mo / 1yr)
+	MVP
+	P0
+	Graphical — line + bar charts; sourced from NBR/trade data
+	Competitor product tracking
+	MVP
+	P1
+	Track what nearby similar businesses sell
+	New trend detection from ads
+	MVP
+	P1
+	Monitor FB/TikTok ad patterns for product signals
+	Demand heatmaps (geo)
+	Phase 2
+	P1
+	Where target customers are concentrated in BD
+	Competitor mapping (geo)
+	Phase 2
+	P1
+	Physical + digital presence of rivals nearby
+	Cross-border opportunity signals
+	Phase 2
+	P2
+	Adjacent markets with unmet demand (India, Myanmar)
+	Market maturity scoring
+	Phase 2
+	P2
+	Is this market saturated or emerging?
+	Google Lens trend integration
+	Phase 2
+	P2
+	Visual search trend data for product categories
+	Global market early signals (USA/AUS/CAN)
+	MVP
+	P1
+	Products trending in USA/AUS/CAN shown with predicted BD entry window
+	
+
+Module 4 — Business Blueprint Generator
+	MVP — Month 1–3
+	
+
+Powered by Claude API. Generates investor-ready business blueprints tailored to Bangladesh market conditions — using all the data collected during onboarding and market intelligence phases.
+
+
+4.1 Financial Projections
+* Total investment breakdown — what to spend on inventory, marketing, logistics, and operations
+* Three-scenario revenue forecast — conservative, base case, and optimistic — for 12 months
+* Break-even point — exactly how many units or clients needed to cover all costs
+* Profit margin by product line — which items make the most money relative to cost
+* Cash flow calendar — month-by-month cash in and out, highlighting danger months
+* Bangladesh NBR VAT estimation — 15% standard rate, SME reduced rates applied where eligible
+
+
+4.2 SEO Strategy — Google & Social
+SEO Type
+	What Is Included
+	Google SEO
+	Top 10 keywords in Bengali and English, monthly search volumes, competition level, and suggested blog or landing page topics.
+	Google Lens Optimisation
+	Image tagging and alt-text recommendations so product photos appear in Google Lens visual search — critical for fashion, furniture, electronics.
+	Social SEO (TikTok, Instagram)
+	Hashtag strategy with volume data, best posting times for Bangladesh audience, and suggested content formats per platform.
+	Marketplace SEO (Daraz, Shajgoj)
+	Title and description templates following each platform's search algorithm requirements, with keyword placement guidance.
+	Trend Duration
+	For each keyword or hashtag, the system shows how long it has been trending and the predicted remaining relevance window.
+	
+
+4.3 Feature Breakdown
+Feature
+	Phase
+	Priority
+	Notes
+	Business Model Canvas
+	MVP
+	P0
+	Value prop, segments, revenue streams, cost structure
+	12-month financial projections
+	MVP
+	P0
+	Conservative / base / optimistic scenarios
+	Break-even calculator
+	MVP
+	P0
+	Updates in real-time as user changes inputs
+	TAM/SAM/SOM analysis
+	MVP
+	P1
+	Bangladesh-specific market sizing
+	Go-to-market plan
+	MVP
+	P0
+	Channel prioritisation, launch sequence, campaign framework
+	SEO strategy — Google + social
+	MVP
+	P0
+	Keyword clusters, platform recommendations
+	Risk register (top 5)
+	MVP
+	P1
+	Sector-specific risks with mitigation strategies
+	Team structure recommendations
+	MVP
+	P1
+	By business type and investment level
+	Confidence scores per section
+	MVP
+	P1
+	AI shows confidence level on each output
+	PDF export (investor-ready)
+	MVP
+	P0
+	Branded, professional format with charts and TOC
+	New product ideas section
+	MVP
+	P1
+	Adjacent opportunities from demand gap analysis
+	Islamic finance templates
+	MVP
+	P1
+	Murabaha and profit-sharing aware projections
+	Human expert review (Pro/Enterprise)
+	Phase 2
+	P1
+	Blueprint reviewed by human expert within 48 hours
+	
+
+________________
+
+
+Module 5 — Shipping & Logistics Comparison
+	MVP — Month 1–3
+	
+
+Maps out the full logistics chain from China (or other markets) to Bangladesh and recommends the cheapest reliable path — including agency comparison, customs duty estimation, and risk flagging.
+
+
+5.1 Supported Shipping Agencies
+Agency / Service
+	Speciality
+	Typical Transit Time
+	SKS Group
+	Air and sea freight, customs clearance, warehousing in Dhaka
+	7–14 days (air), 25–35 days (sea)
+	SkyBuyBD
+	Full-service sourcing + shipping agent, handles PDD/1688 orders
+	10–18 days
+	BD Express
+	Last-mile delivery within Bangladesh, COD support
+	1–3 days (domestic)
+	Sundarban Courier
+	Domestic last-mile, wide rural coverage
+	2–5 days (rural)
+	DHL Express
+	International shipping for export, premium speed
+	3–5 days international
+	Aramex
+	Import parcels, eCommerce returns handling
+	5–10 days
+	
+
+5.2 Feature Breakdown
+Feature
+	Phase
+	Priority
+	Notes
+	Agency directory (SKS, SkyBuyBD, etc.)
+	MVP
+	P0
+	Curated list with manual updates initially
+	Cost calculator per agency
+	MVP
+	P0
+	Weight + dimensions + route = estimated cost
+	Lead time comparison
+	MVP
+	P0
+	Air vs sea vs courier; days to Dhaka/port
+	Customs duty estimator
+	MVP
+	P0
+	NBR duty rates by HS code / product category
+	Total landed cost calculator
+	MVP
+	P0
+	Product cost + shipping + customs + agent fee
+	Customs seizure risk flags
+	MVP
+	P1
+	Products with high customs seizure risk flagged in advance
+	Seasonal delay warnings
+	MVP
+	P1
+	Eid, Chinese New Year, port congestion periods noted on calendar
+	Insurance recommendation
+	MVP
+	P1
+	For high-value shipments
+	Tracking number integration
+	Phase 2
+	P2
+	Paste tracking ID; get shipment status
+	Agency reliability rating
+	Phase 2
+	P1
+	Community ratings + dispute history
+	
+
+Module 6 — Business Tracking Dashboard
+	MVP (financial) + Phase 2 (ads + analytics)
+	
+
+Once the business is running, VentureOS becomes an ongoing operations hub. Everything is tracked in one place — money, ads, inventory, and performance — with AI watching for problems before they become crises.
+
+
+6.1 Advertising Management
+Ad Channel
+	Features Available
+	Meta Ads (Facebook & Instagram)
+	Connect account, view spend vs. results, get AI suggestions for better targeting and creative. Budget optimisation alerts when CPM rises above normal.
+	TikTok for Business
+	Campaign performance overview, best-performing content format recommendations, trending audio suggestions for product videos.
+	Google Ads
+	Keyword bid recommendations, Quality Score improvement tips, search term report summary in simple language.
+	Website / Landing Page
+	Integration with Canva for ad creatives — one-click template fill using product photos.
+	Automated Scheduling
+	AI suggests the best days and times to publish ads based on when the target audience is most active in Bangladesh.
+	
+
+6.2 Feature Breakdown
+Feature
+	Phase
+	Priority
+	Notes
+	Revenue tracker (daily/weekly/monthly)
+	MVP
+	P0
+	Log and visualise income over time
+	Expense manager
+	MVP
+	P0
+	Categorised business costs
+	Import/sales database with graphs
+	MVP
+	P0
+	Line + bar charts; filterable by date/product
+	Product-level profit margin
+	MVP
+	P0
+	Per SKU profitability breakdown
+	Unsold stock alert (>30 days)
+	MVP
+	P1
+	Items in inventory over 30 days highlighted
+	Best-seller ranking
+	MVP
+	P1
+	Top 5 products by revenue and by unit volume
+	VAT/NBR estimation
+	MVP
+	P1
+	15% standard + SME reduced rates
+	Ad performance tracking
+	Phase 2
+	P1
+	Meta Ads + Google Ads performance via API
+	CAC and LTV tracking
+	Phase 2
+	P1
+	Per acquisition channel
+	New product launch timing alerts
+	Phase 2
+	P1
+	When to launch similar products based on trend data
+	Before/after KPI comparison
+	Phase 2
+	P2
+	Impact of strategy changes on key metrics
+	Inventory tracker
+	Phase 2
+	P0
+	SKUs, reorder thresholds, stock movement charts
+	Reorder suggestion
+	Phase 2
+	P1
+	Triggers when stock drops below user-set threshold
+	Similar new product launch radar
+	Phase 2
+	P1
+	New products trending globally related to current catalog
+	
+
+________________
+
+
+Module 7 — SEO & Content Strategy
+	MVP — Month 1–3
+	
+
+Helps users get found online through Google, social media, and marketplace search. Generates ready-to-use ad copy, post scripts, and platform-specific SEO recommendations in Bengali and English.
+
+
+7.1 AI Content & Ad Generation
+* Facebook & Instagram ad copy — Bengali and English versions with headline, body, and CTA
+* TikTok video script outline — hook, middle, and CTA designed for 15–30 second format
+* Product description for marketplace listings — optimised for Daraz and Shajgoj search
+* Suggested price point — based on competitor pricing and local purchasing power benchmarks
+* Related product upsell suggestions — what to show alongside the main product to increase basket size
+
+
+7.2 Feature Breakdown
+Feature
+	Phase
+	Priority
+	Notes
+	Keyword research — Google (BD)
+	MVP
+	P0
+	BD-specific search volume and competition data
+	Social SEO — Facebook + TikTok
+	MVP
+	P0
+	Hashtag strategy, posting time recommendations
+	Google Lens trend analysis
+	Phase 2
+	P1
+	Visual search volume for product categories
+	Trend duration estimator
+	Phase 2
+	P1
+	How long has this trend been active and when will it peak
+	Ad content suggestions
+	MVP
+	P1
+	Related products ads and posts with price/description
+	Canva integration links
+	MVP
+	P1
+	Pre-sized templates linked to Canva for content creation
+	AI post generator
+	Phase 2
+	P1
+	Generate Facebook/Instagram product posts in Bengali
+	Competitor ad monitoring
+	Phase 2
+	P2
+	Track what ads competitors are running on FB
+	
+
+Module 8 — Platform & Collaboration
+	MVP (core) + Phase 2 (team features)
+	
+
+Platform-wide features including multi-user collaboration, offline mode, low-data mode, and language settings. Designed to work reliably in Bangladesh's real infrastructure conditions.
+
+
+Feature
+	Phase
+	Priority
+	Notes
+	Role-based access control
+	MVP
+	P1
+	Owner / Co-founder / Manager / Analyst / Guest
+	Shared dashboards
+	Phase 2
+	P1
+	Real-time collaborative views with conflict resolution
+	Offline mode (PWA)
+	MVP
+	P1
+	Financial tracker + inventory + blueprint view offline
+	Auto-sync on reconnect
+	MVP
+	P1
+	PouchDB + CouchDB replication
+	Lite mode (low data)
+	MVP
+	P1
+	70% data reduction; target under 5MB/day
+	Bengali + English toggle
+	MVP
+	P0
+	Per-user language preference stored in profile
+	WhatsApp/Telegram alerts
+	Phase 2
+	P1
+	Price drop alerts, trend alerts, reorder notifications
+	Public API (Enterprise)
+	Phase 3
+	P3
+	Developer access to VentureOS data
+	
+
+Module 9 — Trust, Security & Compliance
+	MVP — Month 1–3
+	
+
+Security and compliance are built in from Day 1 — not bolted on. All financial data is encrypted, sensitive inputs never leave the device, and users retain full control of their data.
+
+
+Feature
+	Phase
+	Priority
+	Notes
+	AES-256 encryption at rest
+	MVP
+	P0
+	All financial data encrypted
+	TLS 1.3 in transit
+	MVP
+	P0
+	All API communication encrypted
+	No data used for AI training
+	MVP
+	P0
+	Explicit opt-in only
+	Sensitive inputs local-only
+	MVP
+	P0
+	Financial inputs never sent to cloud LLM
+	Full data export (JSON/CSV)
+	MVP
+	P1
+	User can export all their data at any time
+	Account + data deletion
+	MVP
+	P1
+	Permanent deletion on request
+	Bangladesh Digital Security Act
+	MVP
+	P0
+	Full compliance from launch
+	GDPR alignment
+	MVP
+	P1
+	Aligned from launch for future global readiness
+	Bengali plain-language privacy policy
+	MVP
+	P0
+	Users must be able to understand their rights
+	Hallucination audit
+	MVP
+	P1
+	Blueprint AI outputs reviewed monthly; target error rate below 2%
+	
+
+________________
+
+
+Module 10 — Pre-Data Intelligence — AI Market Research Layer
+	MVP — Month 1–3
+	
+
+Before any product decision is made, VentureOS pulls structured data from global AI search engines and commerce platforms to give users a 360-degree view of the product's global landscape. This layer uses Deepseek, Baidu, Kimi, and similar sources to aggregate product-level intelligence not available through standard search.
+
+
+10.1 What Is Pre-Data?
+Pre-Data is structured market research collected automatically before the user commits to a product. It answers three questions: Is this product available? Where is it cheapest? And what do buyers say about it?
+
+
+10.2 Sample Pre-Data Output
+Product
+	Platform
+	Price Range (BDT)
+	Description & Notes
+	Risk Level
+	Toys (plastic/educational)
+	Pinduoduo
+	৳50 – ৳5,000
+	Wide range from low-cost to premium. Easy to import, high demand around Eid and school seasons.
+	Low
+	2nd-hand laptops
+	Xianyu
+	৳8k – ৳25k
+	Medium risk category. Requires trust-building with buyers. Check seller history carefully before bulk order.
+	Medium
+	Eco bags / tote bags
+	Alibaba, 1688
+	৳80 – ৳400
+	Rising demand post-plastic ban. Low weight — cheap air freight. Custom print available.
+	Low
+	Wireless earbuds
+	Pinduoduo, DHgate
+	৳300 – ৳2,000
+	High competition in BD. Differentiate on charging case design or battery life. Check certifications.
+	Medium
+	Portable solar chargers
+	Alibaba
+	৳800 – ৳3,500
+	Growing interest among rural users and travellers. Low current BD competition.
+	Low-Medium
+	Kitchen mini appliances
+	1688, DHgate
+	৳400 – ৳2,500
+	High Eid gifting demand. Requires BSTI certification for some items.
+	Medium
+	
+
+10.3 Data Sources
+Source
+	Purpose
+	Deepseek
+	Product trend queries and competitor intelligence from Chinese market
+	Baidu Shopping
+	Price benchmarking and demand signals from China domestic market
+	Kimi
+	Long-context document analysis for supplier catalogues and product specs
+	Pinduoduo / Temu
+	Real-time pricing and bestseller ranking data
+	Xianyu
+	Secondhand market pricing for refurbished goods
+	Alibaba
+	Wholesale pricing, MOQ, shipping cost estimates, supplier ratings
+	
+
+________________
+
+
+Module 11 — Marketplace Intelligence Database
+	Phase 1 (Core) + Auto-Update Ongoing
+	
+
+★  NEW MODULE — Added per product requirement. This module is a server-side AI research database and does not have a user-facing interface. It is consumed internally by the AI Research Layer and the Blueprint Generator.
+	
+
+11.1 Purpose & Overview
+Module 11 is a server-side database that stores structured, categorized, and versioned records of websites and marketplace pages (e.g. Instagram shop pages, Facebook business pages, Daraz storefronts, TikTok shops, e-commerce websites) organized by product category. It also tracks which sites or platforms tend to launch new products first within each category — giving the AI research layer a directional signal about where to look first when researching new trends or products.
+
+
+This database is NOT exposed to end users. It is consumed by the AI Router when performing market research, product validation, and competitor discovery tasks. The database automatically updates on a scheduled basis and maintains full version history so changes over time can be audited and rolled back.
+
+
+11.2 Database Schema — Core Tables
+
+
+Table: marketplace_sites
+Field
+	Type
+	Description
+	Example
+	site_id
+	UUID PK
+	Unique identifier for the site record
+	a3f9-...
+	site_name
+	VARCHAR(255)
+	Human-readable name of the site or page
+	Shajgoj BD
+	site_url
+	TEXT
+	Full URL of the site or page
+	https://shajgoj.com
+	platform_type
+	ENUM
+	Type: website, facebook_page, instagram_page, tiktok_shop, daraz_store, youtube_channel, other
+	facebook_page
+	product_categories
+	TEXT[]
+	Array of product categories this site covers
+	{cosmetics, skincare}
+	primary_category
+	VARCHAR(100)
+	Main category this site is classified under
+	cosmetics
+	country_focus
+	VARCHAR(50)
+	Primary geographic market served
+	Bangladesh
+	launch_priority_score
+	FLOAT
+	AI-computed score: how often this site launches products first in its category (0.0–1.0)
+	0.87
+	avg_update_frequency
+	VARCHAR(50)
+	How often new products appear on this site
+	daily
+	follower_count
+	BIGINT
+	Approximate follower/subscriber count
+	450000
+	verified
+	BOOLEAN
+	Whether the site has been manually verified by the team
+	true
+	active
+	BOOLEAN
+	Whether this site is currently active and scraped
+	true
+	language
+	VARCHAR(10)
+	Primary language of the site
+	bn
+	created_at
+	TIMESTAMP
+	When this record was first added to the DB
+	2024-01-15 09:00:00
+	updated_at
+	TIMESTAMP
+	Last time this record was updated by the auto-update job
+	2024-08-22 03:00:00
+	version
+	INTEGER
+	Current version number of this record (increments on every update)
+	7
+	
+
+Table: site_versions (Version Control)
+Field
+	Type
+	Description
+	version_id
+	UUID PK
+	Unique ID for this version snapshot
+	site_id
+	UUID FK
+	References marketplace_sites.site_id
+	version_number
+	INTEGER
+	Sequential version number for this site record
+	snapshot_data
+	JSONB
+	Full JSON snapshot of the site record at this version
+	changed_fields
+	TEXT[]
+	Array of field names that changed in this version
+	change_source
+	ENUM
+	How this version was created: auto_scrape, manual_edit, ai_enrichment
+	changed_at
+	TIMESTAMP
+	When this version was created
+	changed_by
+	VARCHAR(100)
+	System or user that triggered the change
+	rollback_available
+	BOOLEAN
+	Whether this version can be restored as the current record
+	
+
+Table: category_launch_leaders
+This table stores a ranked list of sites that consistently launch new products first within each category. The AI uses this to know where to look first when researching a new product idea.
+Field
+	Type
+	Description
+	Example
+	category
+	VARCHAR(100)
+	Product category
+	electronics
+	site_id
+	UUID FK
+	References marketplace_sites
+	a3f9-...
+	launch_rank
+	INTEGER
+	Rank within category (1 = launches first most often)
+	1
+	first_launch_count_30d
+	INTEGER
+	Times this site was first to list a new product in the last 30 days
+	14
+	avg_days_ahead_of_market
+	FLOAT
+	Average number of days this site lists a product before others do
+	12.5
+	last_computed_at
+	TIMESTAMP
+	When this ranking was last recalculated
+	2024-08-22 03:30:00
+	
+
+11.3 Auto-Update System
+The database updates automatically via Celery Beat scheduled jobs. The update process runs on a tiered schedule:
+
+
+Update Tier
+	Frequency
+	Trigger
+	What Updates
+	Tier 1 — High-frequency sites
+	Every 6 hours
+	Celery Beat schedule
+	follower_count, active status, new products detected flag
+	Tier 2 — Standard sites
+	Daily at 03:00 UTC
+	Celery Beat schedule
+	All fields including launch_priority_score recalculation
+	Tier 3 — Low-frequency sites
+	Weekly on Monday
+	Celery Beat schedule
+	Full record refresh and AI enrichment pass
+	Tier 4 — Manual / New sites
+	On-demand
+	Admin trigger or AI discovery
+	New site record creation and initial scoring
+	
+
+* Every update creates a new version record in the site_versions table — full audit trail maintained indefinitely
+* Changed fields are recorded per version so diffs can be computed between any two versions
+* If a site is detected as gone/404 for 7+ days, active is set to false — record is NOT deleted
+* AI enrichment pass (Qwen2.5-7b locally) re-scores launch_priority_score weekly using recent first-launch detection data
+* New sites are discovered automatically when scraping identifies a new page/store in a tracked category
+
+
+11.4 How AI Uses This Database
+When a user or internal process triggers a product research task, the AI Router queries this database as the first step:
+1. User submits a product idea (e.g., "portable blenders")
+2. AI Router maps the idea to a product category (e.g., "kitchen_appliances")
+3. Query category_launch_leaders to get top 5 sites ranked by launch_priority_score for that category
+4. Query marketplace_sites to get active sites in that category with their platform_type and URLs
+5. AI research agent (Playwright + Claude API) visits top-ranked sites first to detect new products, prices, and trends
+6. Results fed into Module 10 (Pre-Data Intelligence) and Module 4 (Blueprint Generator)
+
+
+★  The Marketplace Intelligence Database is the memory layer that makes AI research faster and more targeted. Instead of searching the entire internet, the AI knows exactly where to look — and which sources launch products first in each category.
+	
+
+11.5 Sample Data — Launch Leaders by Category
+Category
+	Top Site
+	Platform
+	Launch Rank
+	Avg Days Ahead
+	Electronics
+	TechGadgetBD (Facebook Page)
+	Facebook Page
+	1
+	14.2 days
+	Electronics
+	GadgetsArena BD (Website)
+	Website
+	2
+	11.8 days
+	Fashion
+	Aarong Official (Instagram)
+	Instagram Page
+	1
+	8.5 days
+	Fashion
+	Yellow BD (Website)
+	Website
+	2
+	6.2 days
+	Cosmetics
+	Shajgoj.com (Website)
+	Website
+	1
+	9.1 days
+	Cosmetics
+	Lavish Beauty BD (Facebook)
+	Facebook Page
+	2
+	7.4 days
+	Home & Kitchen
+	Chaldal (Website)
+	Website
+	1
+	5.3 days
+	Toys & Kids
+	Toybay BD (Daraz Store)
+	Daraz Store
+	1
+	10.0 days
+	Sports & Fitness
+	GymNation BD (Instagram)
+	Instagram Page
+	1
+	12.6 days
+	
+
+________________
+
+
+Module 12 — Product Research Site Dataset
+	MVP Internal — Developer Only
+	
+
+⚠  DEVELOPER-ONLY MODULE — This dataset is NOT exposed to end users and is NOT part of any user-facing API. Access is restricted to internal development team members only. Do NOT include in public API documentation or user-facing admin panels.
+	
+
+12.1 Purpose & Overview
+Module 12 is a small, curated internal dataset that defines which websites, platforms, and online marketplaces the VentureOS automation system is authorized to use for product research. It acts as an allowlist and configuration layer for the scraping and AI research automation — controlling WHERE research happens, HOW it happens, and under what constraints.
+
+
+This dataset is separate from Module 11 (which is a live, auto-updating database of all discovered sites). Module 12 is a static-to-semi-static configuration dataset that developers maintain and review. It enforces ethical scraping boundaries, rate limits, and legal compliance rules per site.
+
+
+12.2 Why This Dataset Exists
+* Not all sites should be scraped — some have ToS that prohibit automated access
+* Different sites require different scraping strategies, rate limits, and authentication approaches
+* Developers need a single source of truth for which sites automation is allowed to access
+* Compliance and legal review requires knowing exactly which external sites the system touches
+* Automation reliability: knowing which sites are stable vs. fragile helps prioritize maintenance
+
+
+12.3 Dataset Schema
+
+
+Table: research_sites (Developer-Only, Internal)
+Field
+	Type
+	Description
+	Example
+	site_id
+	UUID PK
+	Unique identifier
+	b2c8-...
+	site_name
+	VARCHAR(255)
+	Name of the site/platform
+	Pinduoduo
+	site_url
+	TEXT
+	Base URL
+	https://www.pinduoduo.com
+	research_purpose
+	TEXT
+	What type of research this site is used for
+	Product pricing, bestseller ranking, review analysis
+	access_method
+	ENUM
+	How automation accesses this site: api, playwright_scraping, scrapy_spider, manual_only, apify_managed
+	playwright_scraping
+	api_key_required
+	BOOLEAN
+	Whether an API key is needed
+	false
+	api_key_env_var
+	VARCHAR(100)
+	Environment variable name storing the API key (if needed)
+	SERPAPI_KEY
+	rate_limit_rpm
+	INTEGER
+	Max requests per minute automation should make to this site
+	10
+	rate_limit_rph
+	INTEGER
+	Max requests per hour
+	200
+	requires_proxy
+	BOOLEAN
+	Whether IP rotation/proxy is required
+	true
+	proxy_pool
+	VARCHAR(50)
+	Which proxy pool to use (apify, brightdata, none)
+	apify
+	js_rendering_required
+	BOOLEAN
+	Whether JavaScript rendering is needed (Playwright vs Scrapy)
+	true
+	auth_required
+	BOOLEAN
+	Whether login/auth is needed to scrape
+	false
+	auth_method
+	VARCHAR(50)
+	Auth type if required: cookie, oauth, api_token
+	cookie
+	tos_reviewed
+	BOOLEAN
+	Whether the site Terms of Service has been reviewed by the team
+	true
+	tos_review_date
+	DATE
+	Date ToS was last reviewed
+	2024-06-01
+	tos_allows_scraping
+	ENUM
+	ToS stance: allowed, prohibited, unclear, api_only
+	unclear
+	legal_risk_level
+	ENUM
+	Internal risk classification: low, medium, high
+	medium
+	data_use_restriction
+	TEXT
+	Any specific restrictions on how scraped data may be used
+	Aggregate and summarize only — do not reproduce full listings
+	scraping_enabled
+	BOOLEAN
+	Master switch — if false, automation will NOT touch this site
+	true
+	last_health_check
+	TIMESTAMP
+	When scraping was last verified to be working
+	2024-08-20 04:00:00
+	health_status
+	ENUM
+	Current health: healthy, degraded, blocked, unknown
+	healthy
+	notes
+	TEXT
+	Free-text notes for developers
+	Use Apify actor pineapple-scraper for PDD. Rotate sessions every 50 requests.
+	added_by
+	VARCHAR(100)
+	Developer who added this entry
+	dev_team
+	added_at
+	TIMESTAMP
+	When this entry was added
+	2024-01-10 10:00:00
+	last_modified_by
+	VARCHAR(100)
+	Developer who last edited this record
+	backend_lead
+	last_modified_at
+	TIMESTAMP
+	When this record was last modified
+	2024-08-15 14:00:00
+	
+
+12.4 Site Registry — Current Authorized Sites
+Site Name
+	Access Method
+	Rate Limit (rpm)
+	Legal Risk
+	Notes
+	Alibaba / 1688
+	API + Playwright fallback
+	30
+	Low
+	Use Open Platform API first. Scraping fallback only when API fails.
+	Pinduoduo
+	Playwright + Apify
+	10
+	Medium
+	No official API. Use Apify actor with IP rotation. Rotate sessions every 50 req.
+	Xianyu (Taobao secondhand)
+	Playwright + Apify
+	8
+	Medium
+	Login required. Use shared account pool managed by devops. Session rotate.
+	Daraz BD
+	Scrapy spider + API
+	20
+	Low
+	Partial public API available. Supplement with Scrapy for seller data.
+	Shajgoj.com
+	Scrapy spider
+	15
+	Low
+	Standard HTML scraping. Respect robots.txt. Partnership to be pursued.
+	Chaldal.com
+	Scrapy spider
+	15
+	Low
+	Product catalog scraping only. No user data collected.
+	Amazon USA (Product API)
+	PA API v5
+	1/sec
+	Low
+	Official Product Advertising API. Requires approval. Affiliate tag applied.
+	eBay (Finding API)
+	REST API
+	5000/day
+	Low
+	Official API. Finding API for trending categories.
+	Google Trends (Pytrends)
+	Unofficial API wrapper
+	5
+	Low
+	Pytrends library. Rate limit aggressively. SerpAPI as backup.
+	SerpAPI (Google/Lens)
+	REST API
+	100/hr
+	Low
+	Paid service. API key in SERPAPI_KEY env var. Budget cap set in dashboard.
+	Facebook Ad Library
+	Official API
+	200/hr
+	Low
+	Use Graph API Ad Library endpoint. No personal data collected.
+	TikTok Research API
+	REST API
+	100/day
+	Low
+	Official TikTok Research API. Requires approved developer account.
+	NBR / Trade Gov BD
+	Manual + HTTP scraping
+	5
+	Low
+	Government site. Scrape monthly. Manual entry for duty rate tables.
+	Facebook Marketplace
+	Playwright (limited)
+	5
+	High
+	HIGH RISK. No official API. Scraping may violate ToS. Use sparingly for price signals only. Legal review required before increasing volume.
+	Deepseek API
+	REST API
+	60/min
+	Low
+	Used for Chinese market intelligence queries. API key in DEEPSEEK_KEY env var.
+	Baidu Shopping
+	Playwright
+	8
+	Medium
+	No official API. Use Apify for IP rotation. Extract product pricing and demand signals only.
+	
+
+12.5 Access Control & Governance
+Rule
+	Detail
+	Who can view this dataset
+	Backend developers and Data/Scraping engineers only. Not accessible to frontend, product, or design team members.
+	Who can add new sites
+	Backend Lead must approve all new site additions. Legal risk level must be assessed before adding.
+	Who can change scraping_enabled
+	Backend Lead only. Changes logged with reason in notes field.
+	ToS review cadence
+	All sites reviewed every 6 months or when a site updates their Terms of Service.
+	High-risk sites (legal_risk_level = high)
+	Require explicit written approval from team lead before enabling. Volume capped at minimum needed.
+	Blocked sites
+	Sites returning HTTP 429 or 403 for 48+ hours are automatically flagged as blocked in health_status. Team is alerted.
+	Data use rules
+	All data from this system: aggregate and summarize only. Never reproduce full listings. Never store personal data. Respect the data_use_restriction field per site.
+	API key management
+	All API keys stored in environment variables (never hardcoded). Rotated every 90 days. Stored in team password manager.
+	Audit log
+	All changes to this table are logged to a separate audit_log table with before/after snapshots. Retained for 2 years.
+	
+
+12.6 Automation Workflow — How This Dataset Is Used
+7. Scraping scheduler (Celery Beat) fires a research job for a product category
+8. AI Router queries research_sites WHERE scraping_enabled = true AND health_status = healthy AND primary_category matches OR research_purpose contains the category keyword
+9. For each returned site, automation reads: access_method, rate_limit_rpm, requires_proxy, proxy_pool, js_rendering_required to configure the scraper correctly
+10. Scraping job runs within the defined rate limits and proxy settings
+11. Results written to MongoDB product collection and flagged for AI enrichment
+12. health_status and last_health_check updated after each run
+
+
+⚠  This dataset is the contract between the development team and the automation system. No scraper should access any external site that is not in this dataset with scraping_enabled = true. Any exception requires explicit team lead approval and must be documented in the notes field.
+	
+
+________________
+
+
+7. Data Strategy — Scraping & Manual Pipeline
+
+
+VentureOS data acquisition uses a hybrid model: automated scraping for scale and speed, manual curation for trust and accuracy. This is the highest-risk engineering component and must be designed carefully.
+
+
+7.1 Data Sources by Platform
+Platform
+	Method
+	Frequency
+	Data Points
+	Notes
+	Alibaba / 1688
+	API + Scraping
+	Nightly
+	Product title, price range, MOQ, supplier rating, images, category
+	API-first; scraping fallback
+	Pinduoduo
+	Playwright scraping
+	Nightly
+	Price, reviews, sales volume, seller tier, images
+	Via Apify with IP rotation
+	Xianyu (闲鱼)
+	Playwright scraping
+	Daily
+	Second-hand price, condition, seller trust score
+	Auth via session pool
+	SkyBuyBD
+	Scraping + manual
+	Weekly
+	Agent pricing, shipping rates, product catalog
+	Manual verification
+	SKS / Other agents
+	Manual entry
+	Weekly
+	Shipping rates, lead times, coverage areas
+	Form-based data entry
+	Daraz BD
+	Scraping + API
+	Daily
+	Local sell prices, reviews, bestseller lists
+	Partial public API
+	Facebook Marketplace
+	Scraping (limited)
+	Weekly
+	Local resale prices, popular categories
+	High legal risk — limited use
+	Amazon USA/UK
+	Scraping / PA API
+	Weekly
+	Global trend signals, US bestseller data
+	PA API primary
+	Google Trends
+	SerpAPI / Pytrends
+	Daily
+	Search volume, trending topics by region
+	SerpAPI for reliability
+	NBR / Trade data
+	Manual + gov API
+	Monthly
+	Import/export volumes, duty rates by HS code
+	Manual entry for duty rates
+	
+
+⚠  LEGAL NOTE: Scraping is used for price intelligence, not content reproduction. Data is aggregated and summarized. Always respect robots.txt and rate limits. For BD-facing platforms, seek partnership agreements as volume grows.
+	
+
+8. Monetization — Freemium Model
+
+
+FREE TIER
+	PRO — ৳999/mo
+	ENTERPRISE — ৳3,499/mo
+	Product search (20/day)
+	Unlimited product search
+	Unlimited + priority fresh data
+	Basic market trends
+	Full market intelligence
+	Custom market reports
+	1 blueprint/month
+	Unlimited blueprints
+	Human expert review (48hr)
+	Basic financial tracker
+	Full financial tracker + VAT
+	Team financial dashboards
+	Shipping calculator
+	Full shipping comparison
+	Dedicated account manager
+	Bengali + English
+	All features + PDF export
+	API access + custom integrations
+	1 user only
+	Up to 3 team members
+	Unlimited team members + RBAC
+	
+
+8.1 Payment Methods at Launch
+* bKash — primary payment method for BD users
+* Nagad — secondary mobile banking option
+* Rocket — Dutch Bangla mobile banking
+* SSLCommerz gateway — covers card + all mobile banking
+* Stripe — for international users (Year 2)
+
+
+8.2 Revenue Projections (Year 1)
+Metric
+	Target
+	Free tier users (Month 6)
+	5,000+
+	Pro conversions (Month 6)
+	300 users (~6% conversion)
+	Monthly Revenue (Month 6)
+	৳299,700 (~$2,700 USD)
+	Enterprise clients (Month 12)
+	15 clients
+	Monthly Revenue (Month 12)
+	৳1.2M+ (~$10,000 USD)
+	
+
+________________
+
+
+9. Development Roadmap — Phase Plan
+
+
+Phase 1 — MVP (Months 1–3)
+★  GOAL: Working product that a reseller can use to find a product, validate demand, estimate costs, generate a business blueprint, and track basic financials. Marketplace Intelligence DB v1 scaffolded.
+	
+
+Week
+	Frontend / Product
+	Backend / Infrastructure
+	1–2
+	Project setup, design system, Bengali font config, onboarding UI (Mode A + B)
+	FastAPI scaffold, PostgreSQL + MongoDB setup, Supabase auth, Redis + Celery
+	3–4
+	Onboarding conversational flow, language toggle, user profile
+	Ollama + Qwen2.5-7b setup, AI router, onboarding intake API
+	5–6
+	Product search UI, results grid, price/quality display
+	Alibaba API integration, first Scrapy spiders (Pinduoduo + Xianyu), MongoDB product schema
+	7–8
+	Shipping calculator UI, agency comparison table
+	Shipping rate database, customs duty calculator (NBR rates), landed cost API
+	9–10
+	Blueprint generator UI, financial projection charts
+	Claude API integration, blueprint prompt engineering, PDF export (WeasyPrint)
+	11–12
+	Financial tracker UI, revenue/expense graphs, break-even chart. Module 11 DB schema deployed.
+	Financial data schema (encrypted), VAT calculator, Module 11 DB tables created, Module 12 research_sites table seeded with initial 10 sites.
+	
+
+Phase 2 — Depth & Collaboration (Months 4–6)
+★  GOAL: Add geolocation intelligence, ad tracking, inventory management, team collaboration, and deepen market intelligence. Module 11 auto-update system live.
+	
+
+* Geolocation heatmaps and competitor mapping (integrate Google Maps API)
+* Inventory management — SKUs, reorder alerts, stock charts
+* Role-based team workspace — Owner / Manager / Analyst / Guest
+* Meta Ads and Google Ads performance tracking integration
+* Advanced market intelligence — price history charts, trend duration estimator
+* SEO module — Google keyword data (SerpAPI), social hashtag strategy
+* WhatsApp/Telegram notification system for alerts
+* Module 11 — Celery Beat auto-update jobs activated; version control live; 100+ sites seeded
+* Module 12 — expanded to 25+ authorized research sites with legal review complete
+
+
+Phase 3 — Platform & Scale (Months 7–9)
+★  GOAL: Full API layer, advanced analytics, React Native mobile app, and public marketplace integrations. Module 11 fully operational with AI enrichment.
+	
+
+* React Native (Expo) mobile app — Android-first (Play Store + direct APK)
+* Public API marketplace for Enterprise partners and developers
+* Full eCommerce integrations: Daraz, Shopify, WooCommerce, Amazon Seller Central
+* Accounting integrations: Wave (free), QuickBooks, Xero
+* Real-time analytics engine — CAC/LTV tracking, ROI dashboards
+* AI-generated social media content (posts, ad copy) in Bengali
+* Canva integration — pre-sized product templates linked from VentureOS
+* Module 11 — AI enrichment pass (Claude API) for top sites; launch leader scoring refined with 6 months of data
+* Module 12 — automated site health monitoring dashboard for dev team
+
+
+10. Team Structure & Responsibilities
+
+
+Role
+	Primary Stack
+	Responsibilities
+	Full-Stack Lead (1)
+	Next.js, FastAPI, PostgreSQL
+	Architecture decisions, API design, authentication, core product features, code review, Module 11/12 schema ownership
+	Frontend Developer (1)
+	Next.js, Tailwind, React
+	UI components, Bengali typography, dashboard charts (Recharts/Nivo), mobile responsiveness
+	Backend / AI Developer (1)
+	Python, FastAPI, Ollama, Celery
+	AI router, Claude API integration, scraping engine, background jobs, data pipeline, Module 11 auto-update jobs
+	Data / Scraping Engineer (1)
+	Scrapy, Playwright, MongoDB
+	Scraper development and maintenance, data cleaning pipeline, product database management, Module 12 site registry maintenance
+	Product / Design (0.5)
+	Figma, Bengali UX
+	UI/UX design, user research, Bengali content, onboarding flow optimization
+	
+
+________________
+
+
+11. Additional Feature Suggestions
+
+
+The following features are not in the original specification but are strongly recommended based on the target market and product strategy:
+
+
+Suggested Feature
+	Phase
+	Why It Matters
+	Competitor Price Alert System
+	Phase 2
+	Get notified when a competitor drops their price below yours — critical for resellers on Daraz/Facebook
+	Customs HS Code Lookup Tool
+	MVP
+	Resellers often mislabel shipments. A built-in HS code finder with BD duty rate reduces customs delays and fines
+	bKash OTP Phone Login
+	MVP
+	Most BD users do not have email or Google accounts. Phone-based auth dramatically improves signup rates
+	Loan & Microcredit Eligibility Checker
+	Phase 2
+	Connect SME financial data to BRAC, BSCIC or MFI eligibility criteria — massive value for growth-stage businesses
+	AI Price Negotiation Script Generator
+	Phase 2
+	Generate Bengali scripts for negotiating with Chinese suppliers via WhatsApp or Alibaba chat
+	Product Image Background Remover
+	Phase 2
+	Integrated AI tool to clean product photos for Daraz/Facebook listings — saves hours per listing
+	Eid / Seasonal Campaign Planner
+	MVP
+	Calendar-integrated planner that auto-suggests stock-up dates, campaign start dates, and discount strategies
+	Group Buying / Co-Import Matching
+	Phase 3
+	Match multiple small resellers to co-import a container and split costs — unique to BD market
+	Pre-loaded Product Database (Top 500)
+	MVP
+	Launch with 500 most-imported products pre-analyzed — users see value immediately without waiting for scraping
+	Deepseek / Kimi Pre-Data Integration
+	Phase 2
+	Use Deepseek and Kimi as supplemental AI data sources for Chinese market intelligence
+	Module 11 Admin UI (Internal)
+	Phase 2
+	Internal dashboard for team to browse, edit, and monitor the Marketplace Intelligence Database
+	Module 12 Health Monitor (Dev Tool)
+	Phase 2
+	Automated alerting when a research site becomes blocked or degraded — with auto-disable after threshold
+	
+
+12. Risk Register
+
+
+Risk
+	Likelihood
+	Impact
+	Module(s) Affected
+	Mitigation
+	Scrapers get blocked by Pinduoduo/Alibaba
+	High
+	High
+	2, 10, 11, 12
+	Use Apify with IP rotation; add manual data entry fallback; build scraper health dashboard; Module 12 auto-disables blocked sites
+	Claude API costs exceed budget
+	Medium
+	Medium
+	4, 10, 11
+	Hybrid AI router limits cloud calls; cache blueprint outputs; set per-user monthly quotas by plan
+	Legal challenge from scraped platforms
+	Low
+	High
+	2, 10, 12
+	Only aggregate/summarize data; never reproduce full listings; Module 12 ToS review process; seek partnership agreements early
+	Low Bengali NLP quality from local model
+	Medium
+	Medium
+	1, 4, 7
+	Fine-tune Qwen2.5 on Bengali business corpus; fallback to Claude for Bengali-critical tasks
+	Reseller data accuracy concerns
+	High
+	Medium
+	2, 3, 10, 11
+	Human review queue for all scraped data; confidence scores shown; source links always visible
+	Payment gateway delays (bKash API)
+	Medium
+	High
+	8
+	Integrate SSLCommerz as primary gateway (aggregates bKash/Nagad/cards); fallback to manual
+	Team bandwidth — 2-5 developers for full scope
+	High
+	High
+	All
+	Strict MVP scope; use Supabase to avoid building auth/storage; Apify for managed scraping
+	Module 11 DB grows too large / slow
+	Medium
+	Medium
+	11
+	Index by category + platform_type; archive old versions to cold storage after 12 months; partition by country_focus
+	Module 12 dev misuse (accessing unauthorized sites)
+	Low
+	High
+	12
+	scraping_enabled flag is the hard gate; audit log catches all changes; monthly dev review of research_sites table
+	Market competition from Indian/global tools
+	Low
+	Medium
+	All
+	Bangladesh-specific localization (NBR, bKash, Eid, Bengali) is the moat — no global tool does this
+	
+
+13. Immediate Next Steps — Week 1 Checklist
+
+
+★  PRIORITY: Complete these before writing a single line of product code.
+	
+
+13. Register the product name and domain (ventureos.app or ventureos.com.bd)
+14. Set up GitHub organisation with monorepo: /apps/web (Next.js), /apps/api (FastAPI), /packages/shared
+15. Create Supabase project — get DB URL, anon key, service key
+16. Apply for Alibaba Open Platform API access (takes 3–5 business days)
+17. Set up SSLCommerz merchant account (required for bKash integration)
+18. Install Ollama locally + pull Qwen2.5-7b model for development
+19. Create Claude API account at console.anthropic.com — start on pay-as-you-go
+20. Set up Apify account — free tier is enough for MVP scraping volume
+21. Create PostgreSQL schemas for Module 11 (marketplace_sites, site_versions, category_launch_leaders) and Module 12 (research_sites) — deploy migrations before any scraping work begins
+22. Seed Module 12 research_sites with initial 10 authorized sites and assign legal_risk_level to each
+23. Build a pre-launch landing page in Bengali + English to collect waitlist emails
+24. Recruit 10 target users (resellers + SME owners) for Week 3 user interviews
+25. Design onboarding wireframes in Figma before any UI code is written
+26. Define MVP "done" criteria: what does a user accomplish in their first 10 minutes?
+
+
+
+
+
+
+
+
+
+
+
+
+VentureOS — Complete Product Development Specification v2.0Page
