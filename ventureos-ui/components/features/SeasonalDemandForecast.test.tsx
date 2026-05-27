@@ -1,59 +1,48 @@
 import { render, screen } from '@testing-library/react';
-import { NextIntlClientProvider } from 'next-intl';
 import { SeasonalDemandForecast, SeasonalForecast } from './SeasonalDemandForecast';
 
-const messages = {
-  marketIntelligence: {
-    seasonalForecasts: {
-      title: 'Seasonal Demand Forecasts',
-      timeframe: 'Timeframe',
-      confidenceScore: 'Confidence Score',
-      keyProducts: 'Key Products',
-      peakMonths: 'Peak Months',
-      demandLevels: {
-        high: 'High Demand',
-        medium: 'Medium Demand',
-        low: 'Low Demand',
-      },
-      seasons: {
-        eid: {
-          name: 'Eid Season',
-          description: 'High demand for clothing, gifts, home decor, and jewelry during Eid celebrations',
-        },
-        winter: {
-          name: 'Winter Season',
-          description: 'Increased demand for warm clothing, blankets, and heating accessories',
-        },
-        school: {
-          name: 'School Season',
-          description: 'High demand for school uniforms, bags, stationery, and shoes during back-to-school period',
-        },
-        monsoon: {
-          name: 'Monsoon Season',
-          description: 'Trending waterproof items, umbrellas, rain gear, and protective accessories',
-        },
-      },
-      products: {
-        clothing: 'Clothing',
-        gifts: 'Gifts',
-        homeDecor: 'Home Decor',
-        jewelry: 'Jewelry',
-        jackets: 'Jackets',
-        sweaters: 'Sweaters',
-        blankets: 'Blankets',
-        heaters: 'Heaters',
-        uniforms: 'Uniforms',
-        bags: 'Bags',
-        stationery: 'Stationery',
-        shoes: 'Shoes',
-        raincoats: 'Raincoats',
-        umbrellas: 'Umbrellas',
-        waterproofBags: 'Waterproof Bags',
-        boots: 'Boots',
-      },
-    },
+// Override the global next-intl mock with a translation-aware version
+jest.mock('next-intl', () => ({
+  useTranslations: () => {
+    const translations: Record<string, string> = {
+      'title': 'Seasonal Demand Forecasts',
+      'timeframe': 'Timeframe',
+      'confidenceScore': 'Confidence Score',
+      'keyProducts': 'Key Products',
+      'peakMonths': 'Peak Months',
+      'demandLevels.high': 'High Demand',
+      'demandLevels.medium': 'Medium Demand',
+      'demandLevels.low': 'Low Demand',
+      'seasons.eid.name': 'Eid Season',
+      'seasons.eid.description': 'High demand for clothing, gifts, home decor, and jewelry during Eid celebrations',
+      'seasons.winter.name': 'Winter Season',
+      'seasons.winter.description': 'Increased demand for warm clothing, blankets, and heating accessories',
+      'seasons.school.name': 'School Season',
+      'seasons.school.description': 'High demand for school uniforms, bags, stationery, and shoes during back-to-school period',
+      'seasons.monsoon.name': 'Monsoon Season',
+      'seasons.monsoon.description': 'Trending waterproof items, umbrellas, rain gear, and protective accessories',
+      'products.clothing': 'Clothing',
+      'products.gifts': 'Gifts',
+      'products.homeDecor': 'Home Decor',
+      'products.jewelry': 'Jewelry',
+      'products.jackets': 'Jackets',
+      'products.sweaters': 'Sweaters',
+      'products.blankets': 'Blankets',
+      'products.heaters': 'Heaters',
+      'products.uniforms': 'Uniforms',
+      'products.bags': 'Bags',
+      'products.stationery': 'Stationery',
+      'products.shoes': 'Shoes',
+      'products.raincoats': 'Raincoats',
+      'products.umbrellas': 'Umbrellas',
+      'products.waterproofBags': 'Waterproof Bags',
+      'products.boots': 'Boots',
+    };
+    return (key: string) => translations[key] || key;
   },
-};
+  useLocale: () => 'en',
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
 
 const mockForecasts: SeasonalForecast[] = [
   {
@@ -78,18 +67,14 @@ const mockForecasts: SeasonalForecast[] = [
   },
 ];
 
-const renderWithIntl = (component: React.ReactElement) => {
-  return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      {component}
-    </NextIntlClientProvider>
-  );
+const renderComponent = (component: React.ReactElement) => {
+  return render(component);
 };
 
 describe('SeasonalDemandForecast', () => {
   describe('Default View', () => {
     it('renders all seasonal forecasts with default data', () => {
-      renderWithIntl(<SeasonalDemandForecast />);
+      renderComponent(<SeasonalDemandForecast />);
 
       expect(screen.getByText('Eid Season')).toBeInTheDocument();
       expect(screen.getByText('Winter Season')).toBeInTheDocument();
@@ -98,28 +83,28 @@ describe('SeasonalDemandForecast', () => {
     });
 
     it('displays demand levels correctly', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       expect(screen.getByText('High Demand')).toBeInTheDocument();
       expect(screen.getByText('Medium Demand')).toBeInTheDocument();
     });
 
     it('displays confidence scores', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       expect(screen.getByText('92%')).toBeInTheDocument();
       expect(screen.getByText('85%')).toBeInTheDocument();
     });
 
     it('displays timeframes', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       expect(screen.getByText('Mar-Apr 2024')).toBeInTheDocument();
       expect(screen.getByText('Dec 2024 - Jan 2025')).toBeInTheDocument();
     });
 
     it('displays key products as badges', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       expect(screen.getByText('Clothing')).toBeInTheDocument();
       expect(screen.getByText('Gifts')).toBeInTheDocument();
@@ -130,14 +115,14 @@ describe('SeasonalDemandForecast', () => {
     });
 
     it('displays peak months', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       expect(screen.getByText('March, April')).toBeInTheDocument();
       expect(screen.getByText('December, January')).toBeInTheDocument();
     });
 
     it('displays seasonal descriptions', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       expect(
         screen.getByText(/High demand for clothing, gifts, home decor, and jewelry/)
@@ -150,28 +135,28 @@ describe('SeasonalDemandForecast', () => {
 
   describe('Compact View', () => {
     it('renders compact layout when compact prop is true', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
 
       expect(screen.getByText('Eid Season')).toBeInTheDocument();
       expect(screen.getByText('Winter Season')).toBeInTheDocument();
     });
 
     it('displays demand levels in compact view', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
 
       expect(screen.getByText('High Demand')).toBeInTheDocument();
       expect(screen.getByText('Medium Demand')).toBeInTheDocument();
     });
 
     it('does not display confidence scores in compact view', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
 
       expect(screen.queryByText('Confidence Score')).not.toBeInTheDocument();
       expect(screen.queryByText('92%')).not.toBeInTheDocument();
     });
 
     it('does not display key products in compact view', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} compact={true} />);
 
       expect(screen.queryByText('Key Products')).not.toBeInTheDocument();
     });
@@ -179,7 +164,7 @@ describe('SeasonalDemandForecast', () => {
 
   describe('Visual Indicators', () => {
     it('applies correct color scheme for each season', () => {
-      const { container } = renderWithIntl(
+      const { container } = renderComponent(
         <SeasonalDemandForecast forecasts={mockForecasts} />
       );
 
@@ -191,7 +176,7 @@ describe('SeasonalDemandForecast', () => {
     });
 
     it('renders confidence score progress bars', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       const progressBars = screen.getAllByRole('progressbar');
       expect(progressBars).toHaveLength(2);
@@ -212,7 +197,7 @@ describe('SeasonalDemandForecast', () => {
         peakMonths: ['June'],
       };
 
-      const { container } = renderWithIntl(
+      const { container } = renderComponent(
         <SeasonalDemandForecast forecasts={[lowConfidenceForecast]} />
       );
 
@@ -222,15 +207,15 @@ describe('SeasonalDemandForecast', () => {
   });
 
   describe('Accessibility', () => {
-    it('has proper ARIA labels for icons', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+    it('has proper ARIA hidden attributes for decorative icons', () => {
+      const { container } = renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
-      const icons = screen.getAllByRole('img', { hidden: true });
+      const icons = container.querySelectorAll('svg[aria-hidden="true"]');
       expect(icons.length).toBeGreaterThan(0);
     });
 
     it('has proper ARIA attributes for progress bars', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       const progressBars = screen.getAllByRole('progressbar');
       progressBars.forEach((bar) => {
@@ -242,7 +227,7 @@ describe('SeasonalDemandForecast', () => {
     });
 
     it('provides descriptive labels for confidence scores', () => {
-      renderWithIntl(<SeasonalDemandForecast forecasts={mockForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={mockForecasts} />);
 
       expect(screen.getByLabelText(/Confidence Score: 92%/)).toBeInTheDocument();
       expect(screen.getByLabelText(/Confidence Score: 85%/)).toBeInTheDocument();
@@ -251,9 +236,9 @@ describe('SeasonalDemandForecast', () => {
 
   describe('Empty State', () => {
     it('renders nothing when forecasts array is empty', () => {
-      const { container } = renderWithIntl(<SeasonalDemandForecast forecasts={[]} />);
+      const { container } = renderComponent(<SeasonalDemandForecast forecasts={[]} />);
 
-      expect(container.firstChild).toBeEmptyDOMElement();
+      expect(container.innerHTML).toBe('');
     });
   });
 
@@ -270,7 +255,7 @@ describe('SeasonalDemandForecast', () => {
         peakMonths: ['June'],
       };
 
-      renderWithIntl(<SeasonalDemandForecast forecasts={[lowDemandForecast]} />);
+      renderComponent(<SeasonalDemandForecast forecasts={[lowDemandForecast]} />);
 
       expect(screen.getByText('Low Demand')).toBeInTheDocument();
     });
@@ -309,7 +294,7 @@ describe('SeasonalDemandForecast', () => {
         },
       ];
 
-      renderWithIntl(<SeasonalDemandForecast forecasts={allLevelForecasts} />);
+      renderComponent(<SeasonalDemandForecast forecasts={allLevelForecasts} />);
 
       expect(screen.getByText('High Demand')).toBeInTheDocument();
       expect(screen.getByText('Medium Demand')).toBeInTheDocument();
@@ -319,7 +304,7 @@ describe('SeasonalDemandForecast', () => {
 
   describe('Responsive Layout', () => {
     it('uses grid layout for default view', () => {
-      const { container } = renderWithIntl(
+      const { container } = renderComponent(
         <SeasonalDemandForecast forecasts={mockForecasts} />
       );
 
@@ -329,7 +314,7 @@ describe('SeasonalDemandForecast', () => {
     });
 
     it('uses vertical stack layout for compact view', () => {
-      const { container } = renderWithIntl(
+      const { container } = renderComponent(
         <SeasonalDemandForecast forecasts={mockForecasts} compact={true} />
       );
 

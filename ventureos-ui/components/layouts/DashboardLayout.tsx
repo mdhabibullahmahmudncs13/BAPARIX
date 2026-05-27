@@ -56,7 +56,7 @@ export function DashboardLayout({
         </div>
         
         {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8">
+        <main id="main-content" className="p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

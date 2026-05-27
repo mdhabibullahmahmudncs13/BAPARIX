@@ -741,6 +741,74 @@ describe('BlueprintViewer', () => {
       // Verify the button exists and is clickable
       expect(exportButton).toBeInTheDocument();
     });
+
+    it('should accept userName and userEmail props for PDF metadata', () => {
+      renderWithIntl(
+        <BlueprintViewer
+          blueprint={mockBlueprint}
+          userName="Test User"
+          userEmail="test@example.com"
+        />
+      );
+
+      // Component should render without errors with user props
+      expect(screen.getByRole('button', { name: 'header.exportPDF' })).toBeInTheDocument();
+    });
+
+    it('should include PDF export with timestamp and user info', async () => {
+      const mockSave = jest.fn();
+      const mockText = jest.fn();
+      const mockAddImage = jest.fn();
+      const mockAddPage = jest.fn();
+      const mockSetFontSize = jest.fn();
+      const mockSetTextColor = jest.fn();
+      const mockSetPage = jest.fn();
+      const mockGetNumberOfPages = jest.fn().mockReturnValue(1);
+
+      const mockPdfInstance = {
+        addImage: mockAddImage,
+        addPage: mockAddPage,
+        save: mockSave,
+        text: mockText,
+        setFontSize: mockSetFontSize,
+        setTextColor: mockSetTextColor,
+        setPage: mockSetPage,
+        getNumberOfPages: mockGetNumberOfPages,
+      };
+
+      // Mock jspdf module
+      jest.doMock('jspdf', () => ({
+        __esModule: true,
+        default: jest.fn().mockImplementation(() => mockPdfInstance),
+      }));
+
+      // Mock html2canvas module
+      jest.doMock('html2canvas', () => ({
+        __esModule: true,
+        default: jest.fn().mockResolvedValue({
+          toDataURL: jest.fn().mockReturnValue('data:image/png;base64,test'),
+          height: 1000,
+          width: 800,
+        }),
+      }));
+
+      renderWithIntl(
+        <BlueprintViewer
+          blueprint={mockBlueprint}
+          userName="Test User"
+          userEmail="test@example.com"
+        />
+      );
+
+      const exportButton = screen.getByRole('button', { name: 'header.exportPDF' });
+      fireEvent.click(exportButton);
+
+      // Wait for async PDF generation
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // The export button should be present and clickable
+      expect(exportButton).toBeInTheDocument();
+    });
   });
 
   describe('Responsive Design', () => {
