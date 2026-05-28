@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Noto_Sans_Bengali, Inter } from 'next/font/google';
 import { locales, Locale } from '@/i18n';
 import { Providers } from './providers';
+import { SkipToContent } from '@/components/shared/SkipToContent';
 import '../globals.css';
 
 const notoSansBengali = Noto_Sans_Bengali({
@@ -51,7 +52,10 @@ export default async function LocaleLayout({
     >
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
+          <Providers>
+            <SkipToContent />
+            {children}
+          </Providers>
         </NextIntlClientProvider>
       </body>
     </html>

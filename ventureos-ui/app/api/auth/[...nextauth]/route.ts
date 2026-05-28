@@ -2,9 +2,9 @@ import NextAuth from 'next-auth';
 import { authConfig } from '@/lib/auth';
 
 /**
- * NextAuth.js API route handler
+ * NextAuth.js v5 API route handler
  * Handles all authentication requests: /api/auth/*
  */
-const handler = NextAuth(authConfig);
+const { handlers } = NextAuth(authConfig);
 
-export { handler as GET, handler as POST };
+export const { GET, POST } = handlers;
