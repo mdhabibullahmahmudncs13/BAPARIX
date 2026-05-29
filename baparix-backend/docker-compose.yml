@@ -1,0 +1,210 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: baparix-postgres
+    environment:
+      POSTGRES_DB: baparix
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_dev_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - baparix-network
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: baparix-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo_dev_password
+      MONGO_INITDB_DATABASE: baparix_products
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - baparix-network
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: baparix-redis
+    command: redis-server --requirepass redis_dev_password --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - baparix-network
+
+  # Meilisearch Search Engine
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: baparix-meilisearch
+    environment:
+      MEILI_MASTER_KEY: meilisearch_dev_master_key
+      MEILI_ENV: development
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - baparix-network
+
+  # Ollama Local AI
+  ollama:
+    image: ollama/ollama:latest
+    container_name: baparix-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - baparix-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baparix-api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev_password@postgres:5432/baparix
+      - MONGODB_URL=mongodb://mongo:mongo_dev_password@mongodb:27017/baparix_products
+      - REDIS_URL=redis://:redis_dev_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_dev_password@redis:6379/1
+      - MEILISEARCH_HOST=http://meilisearch:7700
+      - MEILISEARCH_API_KEY=meilisearch_dev_master_key
+      - OLLAMA_BASE_URL=http://ollama:11434
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/.venv
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    networks:
+      - baparix-network
+
+  # Celery Worker
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baparix-celery-worker
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev_password@postgres:5432/baparix
+      - MONGODB_URL=mongodb://mongo:mongo_dev_password@mongodb:27017/baparix_products
+      - REDIS_URL=redis://:redis_dev_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_dev_password@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:redis_dev_password@redis:6379/2
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - postgres
+      - mongodb
+    networks:
+      - baparix-network
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baparix-celery-beat
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev_password@postgres:5432/baparix
+      - MONGODB_URL=mongodb://mongo:mongo_dev_password@mongodb:27017/baparix_products
+      - REDIS_URL=redis://:redis_dev_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_dev_password@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:redis_dev_password@redis:6379/2
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - postgres
+      - mongodb
+    networks:
+      - baparix-network
+
+  # Flower - Celery Monitoring
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baparix-flower
+    command: celery -A app.tasks.celery_app flower --port=5555
+    environment:
+      - CELERY_BROKER_URL=redis://:redis_dev_password@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:redis_dev_password@redis:6379/2
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery-worker
+    networks:
+      - baparix-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  meilisearch_data:
+  ollama_data:
+
+networks:
+  baparix-network:
+    driver: bridge
